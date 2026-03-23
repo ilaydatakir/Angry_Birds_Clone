@@ -33,7 +33,7 @@ public class BirdLauncher2D : MonoBehaviour
         {
             isDragging = false;
             Vector2 launchVector = startPosition - rb.position;
-            rb.isKinematic = false;
+            rb.bodyType = RigidbodyType2D.Dynamic;
             rb.AddForce(launchVector * launchForce);
         }
     }
@@ -41,6 +41,6 @@ public class BirdLauncher2D : MonoBehaviour
     void OnMouseDown()
     {
         isDragging = true;
-        rb.isKinematic = true;
+        rb.bodyType = RigidbodyType2D.Kinematic;
     }
 }
