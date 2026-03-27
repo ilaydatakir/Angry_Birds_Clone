@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections;
+using UnityEngine.InputSystem;
 
 public class BirdController : MonoBehaviour
 {
@@ -7,6 +8,7 @@ public class BirdController : MonoBehaviour
     private Vector2 startPos;
     private SpriteRenderer sr;
     private ParticleSystem ps;
+    private bool isDragging = false;
 
     public float launchPower = 5f;
 
@@ -22,40 +24,52 @@ public class BirdController : MonoBehaviour
         rb.gravityScale = 0;
     }
 
-    void OnMouseDrag()
+    void Update()
     {
-        Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-        mousePos.z = 0;
-        transform.position = mousePos;
-    }
+        if (Mouse.current == null) return;
 
-    void OnMouseUp()
-    {
-        Vector2 direction = startPos - (Vector2)transform.position;
-        rb.bodyType = RigidbodyType2D.Dynamic;
-        rb.gravityScale = 1;
-        rb.AddForce(direction * launchPower, ForceMode2D.Impulse);
+        if (Mouse.current.leftButton.wasPressedThisFrame)
+        {
+            Vector2 mouseWorldPos = Camera.main.ScreenToWorldPoint(
+                Mouse.current.position.ReadValue());
+            Collider2D hit = Physics2D.OverlapPoint(mouseWorldPos);
+            if (hit != null && hit.gameObject == gameObject)
+            {
+                isDragging = true;
+                rb.bodyType = RigidbodyType2D.Kinematic;
+            }
+        }
 
-        StartCoroutine(ResetAfterLanding());
+        if (isDragging)
+        {
+            Vector3 mousePos = Camera.main.ScreenToWorldPoint(
+                Mouse.current.position.ReadValue());
+            mousePos.z = 0;
+            transform.position = mousePos;
+        }
+
+        if (isDragging && Mouse.current.leftButton.wasReleasedThisFrame)
+        {
+            isDragging = false;
+            Vector2 direction = startPos - (Vector2)transform.position;
+            rb.bodyType = RigidbodyType2D.Dynamic;
+            rb.gravityScale = 1;
+            rb.AddForce(direction * launchPower, ForceMode2D.Impulse);
+            StartCoroutine(ResetAfterLanding());
+        }
     }
 
     IEnumerator ResetAfterLanding()
     {
-        // Kuş hareket ediyorsa bekle
         while (rb.linearVelocity.magnitude > 0.3f)
             yield return null;
 
         yield return new WaitForSeconds(3f);
 
-        // Kuş ve partiküller kaybolur / durur
         sr.enabled = false;
         if (ps != null)
             ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
 
-        // Yerde 3 saniye bekle
-
-
-        // Başlangıç pozisyonuna ışınla ve tekrar görünür yap
         transform.position = startPos;
         rb.linearVelocity = Vector2.zero;
         rb.angularVelocity = 0;

@@ -18,6 +18,20 @@ public class BirdLauncher2D : MonoBehaviour
 
     void Update()
     {
+        if (Mouse.current == null) return;
+
+        if (!isDragging && Mouse.current.leftButton.wasPressedThisFrame)
+        {
+            Vector2 mouseWorldPos = Camera.main.ScreenToWorldPoint(
+                Mouse.current.position.ReadValue());
+            Collider2D hit = Physics2D.OverlapPoint(mouseWorldPos);
+            if (hit != null && hit.gameObject == gameObject)
+            {
+                isDragging = true;
+                rb.bodyType = RigidbodyType2D.Kinematic;
+            }
+        }
+
         if (isDragging)
         {
             Vector2 mousePos = Camera.main.ScreenToWorldPoint(Mouse.current.position.ReadValue());
@@ -36,11 +50,5 @@ public class BirdLauncher2D : MonoBehaviour
             rb.bodyType = RigidbodyType2D.Dynamic;
             rb.AddForce(launchVector * launchForce);
         }
-    }
-
-    void OnMouseDown()
-    {
-        isDragging = true;
-        rb.bodyType = RigidbodyType2D.Kinematic;
     }
 }
